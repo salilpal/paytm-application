@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const z = require('zod')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
-const { User } = require('../config/db.js')
+const { User, Account } = require('../config/db.js')
 const { signup, signin, update } = require('../zod/types.js');
 const { authMiddleware } = require('../middleware/middleware.js');
 
@@ -23,7 +23,7 @@ userRouter.post('/signup', async (req, res) => {
     }
 
     const user = await User.findOne({username: username})
-    if (user._id) {
+    if (user) {
         return res.status(411).json({
             msg: 'username already taken'
         })
@@ -33,12 +33,19 @@ userRouter.post('/signup', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt)
 
     try {
-        const dbUser = User.create({
+        const dbUser = await User.create({
             firstName: firstName,
             lastName: lastName,
             username: username,
             password: hashedPassword,
         })
+        const userId = dbUser._id
+
+        await Account.create({
+            userId: userId,
+            balance: 1 + Math.random() * 10000
+        })
+
         const token = jwt.sign({ userId: dbUser._id }, JWT_SECRET )
         return res.status(201).json({
             msg: "signup successful",
@@ -46,7 +53,8 @@ userRouter.post('/signup', async (req, res) => {
         });
     } catch (e) {
         return res.status(411).json({
-            msg: "Invalid Inputs"
+            msg: "Invalid Inputs",
+            error: e.message
         })
     }
 })
@@ -125,49 +133,9 @@ userRouter.put('/update', authMiddleware, async (req, res) => {
     }
 })
 
-/*
-
 // /bulk - a get request to fetch the users by their firstName and lastName
 // a filterable option so that users can search their friends and send them money.
 
-userRouter.get('/bulk', async (req, res) => {
-    const input = req.query.filter
-    const inputArray = input.split(' ')
-    const firstName = inputArray[0]
-    const lastName = inputArray[1]
-    let users = [];
-    let lastNameUsers = [];
-    try {
-
-        users = await User.find({
-            $or: [{
-                firstName: {
-                    "$regex": firstName
-                }
-            },{
-                lastName: {
-                    "$regex": lastName
-                }
-            }]
-        })
-
-        users.concat(lastNameUsers)
-        const uniqueUsers = [
-            ...new Map(users.map(user => [user.username, user])).values()
-        ]
-        return res.status(200).json({
-            msg: "users found",
-            users: uniqueUsers
-        })
-    } catch (e) {
-        return res.status(411).json({
-            msg: 'unable to fetch users.'
-        })
-    }
-})
-*/
-
-// there is another way same route can be created only by using mongoose.
 userRouter.get('/bulk', async (req, res) => {
     const filter = req.query.filter || "";
 
@@ -214,7 +182,7 @@ userRouter.get('/bulk', async (req, res) => {
 })
 
 // /all route is created to fetch all the users.
-// it might not get used anywhere or it should be moved to the admin
+// it might not get used anywhere or it should be moved to the admin if admin ever created
 // it is created for testing purposes
 
 userRouter.get('/all', async (req, res) => {
