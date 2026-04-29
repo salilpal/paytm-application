@@ -23,7 +23,7 @@ userRouter.post('/signup', async (req, res) => {
     }
 
     const user = await User.findOne({username: username})
-    if (user) {
+    if (user._id) {
         return res.status(411).json({
             msg: 'username already taken'
         })
@@ -33,16 +33,16 @@ userRouter.post('/signup', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt)
 
     try {
-        if (!user) {
-        User.create({
+        const dbUser = User.create({
             firstName: firstName,
             lastName: lastName,
             username: username,
             password: hashedPassword,
         })
-        }
+        const token = jwt.sign({ userId: dbUser._id }, JWT_SECRET )
         return res.status(201).json({
-            msg: "signup successful"
+            msg: "signup successful",
+            token: token
         });
     } catch (e) {
         return res.status(411).json({
@@ -55,10 +55,7 @@ userRouter.post('/signup', async (req, res) => {
 // this route returns a jwt token
 userRouter.post('/signin', async (req, res) => {
     const { username, password } = req.body;
-    const validation = signin.safeParse({
-        username: username,
-        password: password
-    })
+    const validation = signin.safeParse(req.body)
     if (!validation.success) {
         return res.status(411).json({
             msg: "Invalid Inputs"
@@ -73,7 +70,7 @@ userRouter.post('/signin', async (req, res) => {
     }
     try {
         const token = jwt.sign(
-            { username: username },
+            { userId: user._id },
             JWT_SECRET,
             { expiresIn: '1h' }
         )
@@ -113,11 +110,9 @@ userRouter.put('/update', authMiddleware, async (req, res) => {
 
     try {
         await User.updateOne (
-        { username: req.user.username },
+        { _id: req.user._id },
         {
-            firstName: updateData.firstName,
-            lastName: updateData.lastName,
-            password: updateData.password
+            updateData
         }
     )
     res.status(201).json({
@@ -130,6 +125,8 @@ userRouter.put('/update', authMiddleware, async (req, res) => {
     }
 })
 
+/*
+
 // /bulk - a get request to fetch the users by their firstName and lastName
 // a filterable option so that users can search their friends and send them money.
 
@@ -141,12 +138,19 @@ userRouter.get('/bulk', async (req, res) => {
     let users = [];
     let lastNameUsers = [];
     try {
+
         users = await User.find({
-            firstName: firstName
+            $or: [{
+                firstName: {
+                    "$regex": firstName
+                }
+            },{
+                lastName: {
+                    "$regex": lastName
+                }
+            }]
         })
-        lastNameUsers = await User.find({
-            lastName: lastName
-        })
+
         users.concat(lastNameUsers)
         const uniqueUsers = [
             ...new Map(users.map(user => [user.username, user])).values()
@@ -161,33 +165,53 @@ userRouter.get('/bulk', async (req, res) => {
         })
     }
 })
+*/
 
-/*
 // there is another way same route can be created only by using mongoose.
 userRouter.get('/bulk', async (req, res) => {
     const filter = req.query.filter || "";
 
-    const users = await User.find({
-        $or: [{
-            firstName: {
-                "$regex": filter
-            }
-        },{
-            lastName: {
-                "$regex": filter
-            }
-        }]
-    })
-    return res.status(201).json({
-        user: users.map(user => ({
-            username: user.username,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            _id: user._id
-        }))
-    })
+    const words = filter.trim().split(/\s+/)
+    const firstNameSearch = words[0]
+    const lastNameSearch = words[1] || words[0]
+
+    try {
+        const users = await User.find({
+            $or: [{
+                firstName: {
+                    "$regex": filter,
+                    "$options": "i"
+                }
+            },{
+                lastName: {
+                    "$regex": filter,
+                    "$options": "i"
+                }
+            }, {
+                $and: [
+                    {
+                        firstName: { "$regex": firstNameSearch, "$options": "i" }
+                    },
+                    {
+                        lastName: { "$regex": lastNameSearch, "$options": "i" }
+                    }
+                ]
+            }]
+        })
+        return res.status(201).json({
+            users: users.map(user => ({
+                username: user.username,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                _id: user._id
+            }))
+        })
+    } catch (e) {
+        return res.status(411).json({
+            msg: 'Error fetching users'
+        })
+    }
 })
-*/
 
 // /all route is created to fetch all the users.
 // it might not get used anywhere or it should be moved to the admin

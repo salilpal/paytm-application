@@ -13,9 +13,9 @@ const signin = z.object({
 })
 
 const update = z.object({
-    firstName: z.string(),
-    lastName: z.string(),
-    password: z.string().min(8)
+    firstName: z.string().optional(),
+    lastName: z.string().optional(),
+    password: z.string().min(8).optional()
 })
 
 module.exports = {
