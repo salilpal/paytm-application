@@ -186,7 +186,7 @@ userRouter.get('/bulk', async (req, res) => {
 // it is created for testing purposes
 
 userRouter.get('/all', async (req, res) => {
-    const users = await User.find({})
+    const users = await User.find({}).select('-password')
     return res.status(200).json({
         users: users
     })
