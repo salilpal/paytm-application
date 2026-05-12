@@ -1,9 +1,61 @@
-import React from 'react'
+import axios from 'axios'
+import React, { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
 function SendMoney () {
+  const [amount, setAmount] = useState(0)
+  const [message, setMessage] = useState('')
+
+  const [searchParams, setSearchParams] = useSearchParams()
+  const id = searchParams.get('id')
+  const firstName = searchParams.get('firstName')
+  const firstLetter = firstName[0].toUpperCase()
+  const lastName = searchParams.get('lastName')
+
+  const handleClick = async () => {
+    const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/account/transfer`,
+      {
+        amount: amount,
+        to: id
+      }, {
+        headers: {
+        'Authorization': 'Bearer '+ localStorage.getItem('token'),
+        'Content-Type': 'application/json'
+        }
+      }
+    )
+    setMessage(response.data.message)
+  }
+
   return (
-    <div>
-      
+    <div className='bg-[#fff] w-full h-screen flex justify-center items-center flex-col'>
+      <div className='bg-[#fff] w-120 h-100 rounded-xl text-black shadow-2xl'>
+        <div className=' justify-center items-center flex pt-5 pb-5 text-2xl font-bold '>Send Money</div>
+
+        <div className='flex grid grid-cols-12 pt-4 pb-4'>
+          <div className='col-span-3 bg-green-500 w-15 h-15 ml-7 p-2 justify-self-center flex justify-center items-center text-3xl text-white rounded-full font-bold'>{firstLetter}</div>
+          <div className='col-span-9 justify-self-start flex justify-center items-center text-2xl pl-3 pr-3'>{firstName} {lastName}</div>
+        </div>
+
+        <div className='w-full p-4 mt-4'>
+          <div className=' w-full font-semibold'>Amount (in $)</div>
+          <input
+            onChange={(e) => {
+              setAmount(e.target.value)
+            }}
+          className='w-full p-2 border-[#e5e5e7] border-1 rounded-md mt-2' type="number" placeholder='Enter amount' />
+        </div>
+
+        <div className='w-full flex justify-center items-center'>
+        <button
+         className='flex w-90 bg-green-500 py-3 justify-center text-white mt-2 font-semibold text-xl rounded-md cursor-pointer'
+         onClick={handleClick}
+         >Initiate Transfer</button>
+        </div>
+      </div>
+      <div className='w-120 h-10 flex items-center pl-10 text-xl text-red-700 '>
+        {message}
+      </div>
     </div>
   )
 }
