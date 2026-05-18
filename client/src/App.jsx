@@ -7,6 +7,7 @@ import Signup from './components/Signup'
 import Signin from './components/Signin'
 import Dashboard from './components/Dashboard'
 import SendMoney from './components/SendMoney'
+import Profile from './components/Profile'
 import './App.css'
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
         <Route path='/signin' element={ <Signin /> }></Route>
         <Route path='/' element={ <Dashboard /> }></Route>
         <Route path='/send' element={ <SendMoney /> }></Route>
+        <Route path='/profile' element={ <Profile /> }></Route>
       </Routes>
     </BrowserRouter>
   )
