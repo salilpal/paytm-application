@@ -1,16 +1,32 @@
 import axios from 'axios'
-import React, { useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import React, { useEffect, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import useMe from '../hooks/useMe'
+import Loader from './common/Loader'
 
 function SendMoney () {
   const [amount, setAmount] = useState(0)
   const [message, setMessage] = useState('')
+  const {user, loading} = useMe()
+  const navigate = useNavigate()
 
   const [searchParams, setSearchParams] = useSearchParams()
   const id = searchParams.get('id')
   const firstName = searchParams.get('firstName')
   const firstLetter = firstName[0].toUpperCase()
   const lastName = searchParams.get('lastName')
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/signin')
+    }
+  }, [user, loading, navigate])
+
+  if (!user) {
+    return (
+      <Loader />
+    )
+  }
 
   const handleClick = async () => {
     const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/account/transfer`,

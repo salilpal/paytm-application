@@ -186,15 +186,26 @@ userRouter.get('/bulk', async (req, res) => {
 // it is created for testing purposes
 
 userRouter.get('/all', async (req, res) => {
-    const users = await User.find({}).select('-password')
+    const excludeUsername = req.query.user
+    const filter = {}
+    if (excludeUsername) {
+        filter.username = { $ne: excludeUsername }
+    }
+
+    const users = await User.find(filter).select('-password')
     return res.status(200).json({
         users: users
     })
 })
 
-userRouter.get('/me', (req, res) => {
-    // this needs to fetch username, firstname, lastname
-    
+userRouter.get('/me', authMiddleware, async (req, res) => {
+    // this needs to return user = { username, firstname, lastname }
+    const userId = req.query.userId
+    const user = await User.findOne({ _id: userId }).select('-password')
+    return res.status(201).json({
+        user: user,
+        msg: 'successful'
+    })
 })
 
 module.exports = userRouter

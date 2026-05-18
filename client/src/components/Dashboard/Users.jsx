@@ -2,14 +2,13 @@ import React, { useEffect, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 
-function Users() {
+function Users(props) {
   const [users, setUsers] = useState([])
   const [filter, setFilter] = useState('')
   
   useEffect(() => {
-    axios.get(`${import.meta.env.VITE_BACKEND_URL}/user/all`)
+    axios.get(`${import.meta.env.VITE_BACKEND_URL}/user/all?user=${props.username}`)
         .then((response) => {
-            console.log(response.data.users)
             setUsers(response.data.users)
         })
   }, [])

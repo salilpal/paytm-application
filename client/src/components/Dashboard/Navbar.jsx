@@ -1,8 +1,23 @@
 import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import useMe from '../../hooks/useMe'
+import Loader from '../common/Loader'
 
 const Navbar = () => {
-  const [username, setUsername] = useState('User')
+  const {user, loading} = useMe()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/signin')
+    }
+  }, [user, loading, navigate])
+
+  if (loading) {
+    return (
+      <Loader></Loader>
+    )
+  }
 
   return (
     <div className='w-full h-18 grid grid-cols-12'>
@@ -11,11 +26,11 @@ const Navbar = () => {
         >
         Paytm
       </div>
-      <div className='col-span-1 justify-self-center my-auto text-2xl font-bold'>Hello, {username}</div>
+      <div className='col-span-1 justify-self-center my-auto text-2xl font-bold'>Hello, {user.username}</div>
       <div 
         className='col-span-1 justify-self-center my-auto text-2xl font-bold'
         >
-          <Link to='/signin'>
+          <Link to='/profile'>
           U
           </Link>
       </div>
