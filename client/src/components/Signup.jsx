@@ -35,7 +35,7 @@ function Signup () {
             setMessage(response.data.message)
             const status = response.status
             if (response.status == 201) {
-                navigate('/dashboard')
+                navigate('/')
             }
         } catch (e) {
             setMessage(e.response.data.msg)

@@ -32,7 +32,7 @@ function Signin () {
       setMessage(response.data.msg)
       const status = response.status
       if (response.status == 201) {
-        navigate('/dashboard')
+        navigate('/')
       }
     } catch (e) {
       setMessage(e.response.data.msg)
