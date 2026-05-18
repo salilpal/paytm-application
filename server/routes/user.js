@@ -192,4 +192,9 @@ userRouter.get('/all', async (req, res) => {
     })
 })
 
+userRouter.get('/me', (req, res) => {
+    // this needs to fetch username, firstname, lastname
+    
+})
+
 module.exports = userRouter
