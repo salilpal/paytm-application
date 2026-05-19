@@ -10,8 +10,6 @@ const { authMiddleware } = require('../middleware/middleware.js');
 
 const JWT_SECRET = process.env.JWT_SECRET
 
-// Signup route
-// this route is used to signup/register a new user
 userRouter.post('/signup', async (req, res) => {
     const { firstName, lastName, username, password } = req.body;
 
@@ -59,8 +57,6 @@ userRouter.post('/signup', async (req, res) => {
     }
 })
 
-// /signin - this route is used to signin the user.
-// this route returns a jwt token
 userRouter.post('/signin', async (req, res) => {
     const { username, password } = req.body;
     const validation = signin.safeParse(req.body)
@@ -95,8 +91,6 @@ userRouter.post('/signin', async (req, res) => {
     }
 })
 
-// /update - this route is used to update user's information such as firstName, lastName, password
-// username cannot be changed.
 userRouter.put('/update', authMiddleware, async (req, res) => {
     const { firstName, lastName, password } = req.body;
     const validation = update.safeParse(req.body)
@@ -132,9 +126,6 @@ userRouter.put('/update', authMiddleware, async (req, res) => {
         })
     }
 })
-
-// /bulk - a get request to fetch the users by their firstName and lastName
-// a filterable option so that users can search their friends and send them money.
 
 userRouter.get('/bulk', async (req, res) => {
     const page = parseInt(req.query.page) || 1;
