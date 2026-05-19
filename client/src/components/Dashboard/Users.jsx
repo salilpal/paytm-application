@@ -5,6 +5,16 @@ import axios from 'axios'
 function Users(props) {
   const [users, setUsers] = useState([])
   const [filter, setFilter] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+
+  console.log(currentPage)
+
+  if (currentPage > totalPages) {
+    setCurrentPage(totalPages)
+  } else if (currentPage < 0) {
+    setCurrentPage(0)
+  } 
   
   useEffect(() => {
     axios.get(`${import.meta.env.VITE_BACKEND_URL}/user/all?user=${props.username}`)
@@ -13,12 +23,20 @@ function Users(props) {
         })
   }, [])
 
+//   useEffect(() => {
+//     axios.get(`${import.meta.env.VITE_BACKEND_URL}/user/bulk?filter=${filter}`)
+//         .then((response) => {
+//             setUsers(response.data.users)
+//         })
+//   }, [filter])
+
   useEffect(() => {
-    axios.get(`${import.meta.env.VITE_BACKEND_URL}/user/bulk?filter=${filter}`)
+    axios.get(`${import.meta.env.VITE_BACKEND_URL}/user/paginated?page=${currentPage}&limit=6`)
         .then((response) => {
             setUsers(response.data.users)
+            setTotalPages(response.data.totalPages)
         })
-  }, [filter])
+  }, [currentPage])
 
   return (
     <div className='w-full h-150'>
@@ -42,8 +60,28 @@ function Users(props) {
       </div>
 
       <div>
-        
+            <div className='w-full grid grid-cols-12 h-15 text-xl font-bold'>
+                <div className='col-span-2 justify-self-center my-auto'>Username</div>
+                <div className='col-span-2 my-auto mx-auto'>First Name</div>
+                <div className='col-span-6'></div>
+                <button className='col-span-2 justify-self-start my-auto p-2 cursor-pointer'>
+                    Send Money
+                </button>
+            </div>
             {users.map((user) => <User key={user._id} user={user} />)}
+            <div className='flex h-15 items-center justify-center'>
+                <button className='bg-blue-500 p-2 mx-2 rounded-lg font-semibold cursor-pointer hover:bg-blue-700 hover:font-bold' onClick={() => {setCurrentPage(currentPage-1)}}>Prev</button>
+                {Array.from({ length: totalPages }, (_, index) => {
+                        const pageNumber = index + 1
+                        return (
+                            <Button key={pageNumber} label={pageNumber} onClick={() => {
+                                setCurrentPage(pageNumber)
+                            }}></Button>
+                        )
+                    })
+                }
+                <button className='bg-blue-500 p-2 mx-2 rounded-lg font-semibold cursor-pointer hover:bg-blue-700 hover:font-bold' onClick={() => {setCurrentPage(currentPage+1)}}>Next</button>
+            </div>
       </div>
     </div>
   )
@@ -51,17 +89,14 @@ function Users(props) {
 
 function User({user}) {
     const navigate = useNavigate()
-    
-    const handleClick = (firstName, lastName, id) => {
-        // navigate(`/send?firstName=${firstName}lastName=${lastName}id=${id}`)
-    }
 
     return (
     <div className='w-full grid grid-cols-12 h-15 text-xl font-semibold'>
-        <div className='col-span-1 justify-self-center my-auto'>{user.username}</div>
-        <div className='col-span-10 my-auto'>{user.firstName}</div>
+        <div className='col-span-2 justify-self-center my-auto'>{user.username}</div>
+        <div className='col-span-2 my-auto mx-auto'>{user.firstName}</div>
+        <div className='col-span-6'></div>
         <button 
-            className='col-span-1 justify-self-start my-auto bg-black text-white p-2 pl-3 pr-3 rounded cursor-pointer'
+            className='col-span-2 justify-self-start my-auto bg-black text-white p-2 pl-3 pr-3 rounded cursor-pointer'
             onClick={(e) => {
                 navigate(`/send?id=${user._id}&firstName=${user.firstName}&lastName=${user.lastName}`)
             }}
@@ -72,8 +107,10 @@ function User({user}) {
     )
 }
 
+function Button({label, onClick}) {
+    return <button className='bg-blue-500 p-2 px-4 mx-2 rounded-lg font-semibold cursor-pointer hover:bg-blue-700 hover:font-bold' onClick={onClick}>
+        {label}
+    </button>
+}
+
 export default Users
-// to build
-// 1. search functionality
-// 2. pagination
-// 3. dividing into different components
