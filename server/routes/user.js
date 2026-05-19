@@ -137,6 +137,9 @@ userRouter.put('/update', authMiddleware, async (req, res) => {
 // a filterable option so that users can search their friends and send them money.
 
 userRouter.get('/bulk', async (req, res) => {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 6;
+
     const filter = req.query.filter || "";
 
     const words = filter.trim().split(/\s+/)
@@ -144,35 +147,38 @@ userRouter.get('/bulk', async (req, res) => {
     const lastNameSearch = words[1] || words[0]
 
     try {
-        const users = await User.find({
-            $or: [{
-                firstName: {
-                    "$regex": filter,
-                    "$options": "i"
-                }
-            },{
-                lastName: {
-                    "$regex": filter,
-                    "$options": "i"
-                }
-            }, {
-                $and: [
-                    {
-                        firstName: { "$regex": firstNameSearch, "$options": "i" }
-                    },
-                    {
-                        lastName: { "$regex": lastNameSearch, "$options": "i" }
+        const [users, usersCount] = await Promise.all([
+            User.find({
+                $or: [{
+                    firstName: {
+                        "$regex": filter,
+                        "$options": "i"
                     }
-                ]
-            }]
-        })
+                },{
+                    lastName: {
+                        "$regex": filter,
+                        "$options": "i"
+                    }
+                }, {
+                    $and: [
+                        {
+                            firstName: { "$regex": firstNameSearch, "$options": "i" }
+                        },
+                        {
+                            lastName: { "$regex": lastNameSearch, "$options": "i" }
+                        }
+                    ]
+                }]
+            }).limit(limit),
+            User.countDocuments()
+        ])
+        const totalPages = Math.ceil(usersCount / limit)
         return res.status(201).json({
-            users: users.map(user => ({
-                username: user.username,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                _id: user._id
-            }))
+            msg: 'success',
+            users: users,
+            totalPages: totalPages,
+            currentPage: page,
+            totalItems: usersCount
         })
     } catch (e) {
         return res.status(411).json({

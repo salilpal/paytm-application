@@ -14,21 +14,14 @@ function Users(props) {
     setCurrentPage(totalPages)
   } else if (currentPage < 0) {
     setCurrentPage(0)
-  } 
-  
+  }
+
   useEffect(() => {
-    axios.get(`${import.meta.env.VITE_BACKEND_URL}/user/all?user=${props.username}`)
+    axios.get(`${import.meta.env.VITE_BACKEND_URL}/user/bulk?filter=${filter}&page=${currentPage}&limit=6`)
         .then((response) => {
             setUsers(response.data.users)
         })
-  }, [])
-
-//   useEffect(() => {
-//     axios.get(`${import.meta.env.VITE_BACKEND_URL}/user/bulk?filter=${filter}`)
-//         .then((response) => {
-//             setUsers(response.data.users)
-//         })
-//   }, [filter])
+  }, [filter])
 
   useEffect(() => {
     axios.get(`${import.meta.env.VITE_BACKEND_URL}/user/paginated?page=${currentPage}&limit=6`)
