@@ -181,9 +181,34 @@ userRouter.get('/bulk', async (req, res) => {
     }
 })
 
-// /all route is created to fetch all the users.
-// it might not get used anywhere or it should be moved to the admin if admin ever created
-// it is created for testing purposes
+userRouter.get('/paginated', async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 6;
+    
+        const startIndex = (page - 1) * limit;
+    
+        const [users, usersCount] = await Promise.all([
+            User.find().skip(startIndex).limit(limit),
+            User.countDocuments()
+        ])
+    
+        const totalPages = Math.ceil(usersCount / limit)
+    
+        return res.status(201).json({
+            msg: 'success',
+            users: users,
+            totalPages: totalPages,
+            currentPage: page,
+            totalItems: usersCount
+        })
+    } catch (e) {
+        return res.status(411).json({
+            msg: 'error while fetching paginated users',
+            error: e.message
+        })
+    }
+})
 
 userRouter.get('/all', async (req, res) => {
     const excludeUsername = req.query.user
@@ -199,7 +224,6 @@ userRouter.get('/all', async (req, res) => {
 })
 
 userRouter.get('/me', authMiddleware, async (req, res) => {
-    // this needs to return user = { username, firstname, lastname }
     const userId = req.query.userId
     const user = await User.findOne({ _id: userId }).select('-password')
     return res.status(201).json({
